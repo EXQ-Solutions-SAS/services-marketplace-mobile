@@ -117,3 +117,43 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+# Firebase & Secrets
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+lib/firebase_options.dart
+.env
+auth_secrets.json
+
+# Android specifics
+**/android/local.properties
+**/android/**/generated
+**/android/app/src/main/res/values/google-services.json
+*.jks
+*.keystore
+
+# iOS specifics
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Runner/GeneratedPluginRegistrant.[mh]
+**/ios/Runner/GoogleService-Info.plist
+
+# Dart/Flutter related
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Symbolication related
+app.*.symbols
+app.*.map.json
+
+# Exceptions to keep (Optional)
+!android/app/src/main/res/values/strings.xml
+
+# IDEs
+.idea/
+*.iml
+.vscode/
