@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/pages/login_screen.dart';
+import 'package:services_marketplace_mobile/features/auth/presentation/pages/register_screen.dart';
 
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
@@ -13,33 +14,36 @@ GoRouter createRouter(AuthBloc authBloc) {
     redirect: (context, state) {
       final authState = authBloc.state;
       final bool isLoggingIn = state.matchedLocation == '/login';
+      final bool registering = state.matchedLocation == '/register';
 
-      if (authState is! Authenticated) {
-        return isLoggingIn ? null : '/login';
+      final bool isAuthenticated = authState is Authenticated;
+
+      if (!isAuthenticated && !isLoggingIn && !registering) {
+        return '/login';
       }
 
-      if (isLoggingIn) return '/';
+      // Si ya está autenticado e intenta ir a login o registro, al home.
+      if (isAuthenticated && (isLoggingIn || registering)) {
+        return '/';
+      }
 
       // Aquí podrías añadir la lógica de roles más adelante
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => LoginScreen(), 
-      ),
+      GoRoute(path: '/login', builder: (context, state) => LoginScreen()),
       GoRoute(
         path: '/',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Home - Autenticado')),
-        ),
+        builder: (context, state) =>
+            const Scaffold(body: Center(child: Text('Home - Autenticado'))),
       ),
+      GoRoute(path: '/admin', builder: (context, state) => const Placeholder()),
       GoRoute(
-        path: '/admin',
-        builder: (context, state) => const Placeholder(),
+        path: '/register',
+        builder: (context, state) => const RegisterScreen(),
       ),
     ],
-  ); 
+  );
 }
 
 class BlocListenable<B extends Bloc<dynamic, dynamic>> extends ChangeNotifier {
