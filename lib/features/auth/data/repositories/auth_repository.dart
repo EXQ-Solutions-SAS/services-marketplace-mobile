@@ -1,3 +1,5 @@
+import 'package:services_marketplace_mobile/features/auth/data/models/user_model.dart';
+
 import '../providers/auth_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -6,24 +8,40 @@ class AuthRepository {
 
   AuthRepository(this.provider);
 
-   Future<User?> login(String email, String password) async {
-    // 1. Login en Firebase
-    final userCredential = await provider.signIn(email, password);
-    final user = userCredential.user;
+  Future<UserModel?> login(String email, String password) async {
+    final token = await provider.getToken();
 
-    if (user != null) {
-      // 2. Obtener Token
-      final token = await provider.getToken();
-      
-      // 3. Sincronizar con NestJS (para que exista en Postgres)
-      if (token != null) {
-        await provider.syncUserWithBackend(token);
-      }
+    if (token != null) {
+      // Sincronizamos (el back nos devuelve el usuario de Postgres)
+      final response = await provider.syncUser();
+      return UserModel.fromJson(response.data);
     }
-    return user;
+    return null;
   }
 
   Stream<User?> get currentUser => provider.authStateChanges;
 
   Future<void> logout() async => await provider.signOut();
+
+  Future<UserModel> register({
+    required String email,
+    required String password,
+    required String name,
+    required String phone,
+  }) async {
+    final credential = await provider.signUp(
+      email: email,
+      password: password,
+      name: name,
+      phone: phone,
+    );
+
+    final token = await credential.user?.getIdToken();
+
+    if (token != null) {
+      final response = await provider.syncUser();
+      return UserModel.fromJson(response.data);
+    }
+    throw Exception("Error obteniendo Token");
+  }
 }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
-import '../bloc/auth_bloc.dart';
-
+import 'package:go_router/go_router.dart'; // <--- IMPORTANTE
 // ... imports
 
 class LoginScreen extends StatelessWidget {
@@ -11,7 +9,8 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack( // Usamos Stack para meter un efecto de luz de fondo
+      body: Stack(
+        // Usamos Stack para meter un efecto de luz de fondo
         children: [
           // Efecto de resplandor (Glow) en la esquina superior
           Positioned(
@@ -29,14 +28,12 @@ class LoginScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   "Marketplace",
                   style: TextStyle(
-                    fontSize: 40, 
-                    fontWeight: FontWeight.normal, 
+                    fontSize: 40,
+                    fontWeight: FontWeight.normal,
                     color: AppTheme.primaryOrange,
                     letterSpacing: -1,
                   ),
@@ -46,7 +43,7 @@ class LoginScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 20, color: Colors.white70),
                 ),
                 const SizedBox(height: 50),
-                
+
                 // Los TextFields usarán automáticamente el tema que definimos
                 const TextField(
                   decoration: InputDecoration(
@@ -63,12 +60,22 @@ class LoginScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 32),
-                
+
                 ElevatedButton(
                   onPressed: () {
                     // Acción de login
                   },
-                  child: const Text("ENTRAR"),
+                  child: const Text("Ingresar"),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => context.push(
+                    '/register',
+                  ), // .push para que pueda volver atrás
+                  child: const Text(
+                    "¿No tienes cuenta? Regístrate aquí",
+                    style: TextStyle(color: Colors.white70),
+                  ),
                 ),
               ],
             ),
