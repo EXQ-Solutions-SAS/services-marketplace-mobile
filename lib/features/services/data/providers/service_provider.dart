@@ -1,0 +1,43 @@
+import 'package:dio/dio.dart';
+
+class ServiceDataProvider {
+  final Dio _dio;
+
+  ServiceDataProvider(this._dio);
+
+  // GET /categories
+  Future<Response> getCategories() async {
+    return await _dio.get('/categories');
+  }
+
+  // GET /services
+  Future<Response> getServices({String? excludeUserId}) async {
+    return await _dio.get(
+      '/services',
+      queryParameters: {
+        if (excludeUserId != null)
+          'excludeUserId': excludeUserId, // Forma limpia de Dart
+      },
+    );
+  }
+
+  Future<Response> getMyServices() async {
+    return await _dio.get(
+      '/services/mine',
+    ); // El endpoint que creamos en el Back
+  }
+
+  // POST /services
+  Future<Response> createService(Map<String, dynamic> data) async {
+    return await _dio.post('/services', data: data);
+  }
+
+  // PATCH /services/:id
+  Future<Response> updateService(String id, Map<String, dynamic> data) async {
+    return await _dio.patch('/services/$id', data: data);
+  }
+
+  Future<Response> deleteService(String id) async {
+  return await _dio.delete('/services/$id');
+}
+}

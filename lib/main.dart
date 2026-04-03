@@ -8,6 +8,9 @@ import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
 import 'package:services_marketplace_mobile/features/auth/data/providers/auth_provider.dart';
 import 'package:services_marketplace_mobile/features/auth/data/repositories/auth_repository.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:services_marketplace_mobile/features/services/data/providers/service_provider.dart';
+import 'package:services_marketplace_mobile/features/services/data/repositories/service_repository.dart';
+import 'package:services_marketplace_mobile/features/services/presentation/bloc/service_bloc.dart';
 import 'package:services_marketplace_mobile/firebase_options.dart';
 
 void main() async {
@@ -28,12 +31,22 @@ void main() async {
         RepositoryProvider(
           create: (context) => AuthRepository(context.read<AuthDataProvider>()),
         ),
+
+        RepositoryProvider(
+          create: (context) => ServiceDataProvider(apiClient.dio),
+        ),
+        RepositoryProvider(
+          create: (context) => ServiceRepository(context.read<ServiceDataProvider>()),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
           // 3. El BLoC queda disponible para TODA la app
           BlocProvider(
             create: (context) => AuthBloc(context.read<AuthRepository>()),
+          ),
+          BlocProvider(
+            create: (context) => ServiceBloc(context.read<ServiceRepository>()),
           ),
         ],
         child: const MyApp(),
