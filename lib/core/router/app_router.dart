@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/pages/login_screen.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/pages/register_screen.dart';
+import 'package:services_marketplace_mobile/features/home/presentation/pages/home_screen.dart';
 
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
@@ -32,16 +33,15 @@ GoRouter createRouter(AuthBloc authBloc) {
     },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => LoginScreen()),
-      GoRoute(
-        path: '/',
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Home - Autenticado'))),
-      ),
       GoRoute(path: '/admin', builder: (context, state) => const Placeholder()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
       ),
+      GoRoute(
+      path: '/',
+      builder: (context, state) => const HomeScreen(),
+    ),
     ],
   );
 }

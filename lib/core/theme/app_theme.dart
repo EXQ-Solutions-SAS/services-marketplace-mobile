@@ -4,13 +4,13 @@ class AppTheme {
   static const primaryOrange = Color(0xFFFF6D00);
   static const accentPurple = Color(0xAA00FF);
   static const successBlue = Color(0xFF00B0FF); // Tu nuevo "Verde"
-  static const darkBg = Color(0xFF0F172A);
+  static const backgroundDark = Color(0xFF0F172A);
   static const cardBg = Color(0xFF1E293B);
 
   static final darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: darkBg,
+    scaffoldBackgroundColor: backgroundDark,
     colorScheme: const ColorScheme.dark(
       primary: primaryOrange,
       secondary: accentPurple,

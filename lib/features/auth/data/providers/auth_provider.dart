@@ -10,15 +10,13 @@ class AuthDataProvider {
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   Future<UserCredential> signIn(String email, String password) async {
-    try {
-      return await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-    } catch (e) {
-      rethrow;
-    }
+    return await _firebaseAuth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
+
+  User? get currentUser => _firebaseAuth.currentUser;
 
   Future<String?> getToken() async {
     return await _firebaseAuth.currentUser?.getIdToken();
@@ -47,5 +45,9 @@ class AuthDataProvider {
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<Response> updateProfile(Map<String, dynamic> data) async {
+    return await _dio.patch('/users/me', data: data);
   }
 }

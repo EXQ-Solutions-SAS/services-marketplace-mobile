@@ -20,7 +20,20 @@ class AuthLogoutRequested extends AuthEvent {}
 
 class AuthRegisterRequested extends AuthEvent {
   final String email, password, name, phone;
-  AuthRegisterRequested({required this.email, required this.password, required this.name, required this.phone});
+  AuthRegisterRequested({
+    required this.email,
+    required this.password,
+    required this.name,
+    required this.phone,
+  });
+}
+
+class AuthUpdateProfileRequested extends AuthEvent {
+  final String? name;
+  final String? phone;
+  final String? bio;
+
+  AuthUpdateProfileRequested({this.name, this.phone, this.bio});
 }
 
 // Estados
@@ -34,11 +47,12 @@ class AuthInitial extends AuthState {}
 class AuthLoading extends AuthState {}
 
 class Authenticated extends AuthState {
-  final UserModel user; 
+  final UserModel user;
   Authenticated(this.user);
   @override
   List<Object?> get props => [user];
 }
+
 class Unauthenticated extends AuthState {}
 
 class AuthError extends AuthState {
@@ -84,7 +98,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthError(e.toString()));
       }
     });
+
+    on<AuthUpdateProfileRequested>((event, emit) async {
+      // Guardamos el usuario actual para no perderlo en caso de error
+      final currentState = state;
+      if (currentState is Authenticated) {
+        emit(
+          AuthLoading(),
+        ); // O podrías crear un estado AuthUpdating si no quieres tapar toda la pantalla
+        try {
+          final updatedUser = await repository.updateProfile(
+            name: event.name,
+            phone: event.phone,
+            bio: event.bio,
+          );
+
+          // Emitimos el nuevo estado con el usuario fresco de la DB
+          emit(Authenticated(updatedUser));
+        } catch (e) {
+          emit(AuthError(e.toString()));
+          // Opcional: Re-emitir Authenticated con el usuario previo después del error
+          emit(Authenticated(currentState.user));
+        }
+      }
+    });
   }
 }
-
-
