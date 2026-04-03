@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/pages/profile_screen.dart';
+import 'package:services_marketplace_mobile/features/services/presentation/pages/marketplace_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,7 +14,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    const Center(child: Text("Explorar Servicios", style: TextStyle(color: Colors.white))),
+    const MarketplaceScreen(), // Nuestra nueva pantalla de marketplace
     const Center(child: Text("Mis Bookings", style: TextStyle(color: Colors.white))),
     const ProfileScreen(), // Nuestra nueva pantalla
   ];

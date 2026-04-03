@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:services_marketplace_mobile/features/auth/data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 
