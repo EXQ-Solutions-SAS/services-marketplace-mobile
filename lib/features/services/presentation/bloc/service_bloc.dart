@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:services_marketplace_mobile/features/services/data/models/service_model.dart';
 import 'package:services_marketplace_mobile/features/services/data/repositories/service_repository.dart';
@@ -6,21 +8,47 @@ import 'package:services_marketplace_mobile/features/services/presentation/bloc/
 
 class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
   final ServiceRepository repository;
+  StreamSubscription? _marketplaceSubscription;
+  StreamSubscription? _myServicesSubscription;
 
   ServiceBloc(this.repository) : super(ServiceInitial()) {
     // 1. Manejar carga de servicios
+    // Marketplace
     on<StreamServicesStarted>((event, emit) async {
-      // 1. Emitimos carga inicial solo la primera vez
-      emit(ServiceLoading());
+      await _myServicesSubscription?.cancel();
 
-      // 2. Nos suscribimos al Stream del repository
+      if (state is! MarketplaceLoaded) {
+        emit(ServiceLoading());
+      }
+
+      // IMPORTANTE: Asigna la suscripción para que el próximo evento pueda cancelarla
+      _marketplaceSubscription = repository
+          .getServicesStream(excludeUserId: event.excludeUserId)
+          .listen((_) {});
+
       await emit.forEach<List<ServiceModel>>(
-        repository.getServicesStream(),
-        onData: (services) => ServicesLoaded(services),
-        onError: (error, stackTrace) => ServiceError(error.toString()),
+        repository.getServicesStream(excludeUserId: event.excludeUserId),
+        onData: (services) => MarketplaceLoaded(services),
+        onError: (error, _) => ServiceError(error.toString()),
       );
     });
 
+    // Mis Servicios
+    on<StreamMyServicesStarted>((event, emit) async {
+      await _marketplaceSubscription?.cancel();
+
+      if (state is! MyServicesLoaded) {
+        emit(ServiceLoading());
+      }
+
+      _myServicesSubscription = repository.getMyServicesStream().listen((_) {});
+
+      await emit.forEach<List<ServiceModel>>(
+        repository.getMyServicesStream(),
+        onData: (services) => MyServicesLoaded(services),
+        onError: (error, _) => ServiceError(error.toString()),
+      );
+    });
     // 2. Manejar carga de categorías
     on<FetchCategoriesRequested>((event, emit) async {
       emit(ServiceLoading());

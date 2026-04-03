@@ -11,8 +11,20 @@ class ServiceDataProvider {
   }
 
   // GET /services
-  Future<Response> getServices() async {
-    return await _dio.get('/services');
+  Future<Response> getServices({String? excludeUserId}) async {
+    return await _dio.get(
+      '/services',
+      queryParameters: {
+        if (excludeUserId != null)
+          'excludeUserId': excludeUserId, // Forma limpia de Dart
+      },
+    );
+  }
+
+  Future<Response> getMyServices() async {
+    return await _dio.get(
+      '/services/mine',
+    ); // El endpoint que creamos en el Back
   }
 
   // POST /services

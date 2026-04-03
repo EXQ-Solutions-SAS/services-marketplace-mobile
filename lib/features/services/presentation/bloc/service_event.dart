@@ -5,7 +5,16 @@ abstract class ServiceEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class StreamServicesStarted extends ServiceEvent {} // Nuevo evento
+class StreamServicesStarted extends ServiceEvent {
+  final String? excludeUserId; // <--- Añadimos esto
+
+  StreamServicesStarted({this.excludeUserId});
+
+  @override
+  List<Object?> get props => [excludeUserId];
+} 
+
+class StreamMyServicesStarted extends ServiceEvent {} // Nuevo evento
 
 // Cargar categorías para el formulario de creación
 class FetchCategoriesRequested extends ServiceEvent {}

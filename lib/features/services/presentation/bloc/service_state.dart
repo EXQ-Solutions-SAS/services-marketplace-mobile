@@ -3,6 +3,8 @@ import 'package:services_marketplace_mobile/features/services/data/models/catego
 import 'package:services_marketplace_mobile/features/services/data/models/service_model.dart';
 
 abstract class ServiceState extends Equatable {
+  const ServiceState();
+
   @override
   List<Object?> get props => [];
 }
@@ -11,27 +13,30 @@ class ServiceInitial extends ServiceState {}
 class ServiceLoading extends ServiceState {}
 
 // Estado cuando ya tenemos la lista de servicios
-class ServicesLoaded extends ServiceState {
+class MarketplaceLoaded extends ServiceState {
   final List<ServiceModel> services;
-  ServicesLoaded(this.services);
-  @override
-  List<Object?> get props => [services];
+  const MarketplaceLoaded(this.services);
+}
+
+class MyServicesLoaded extends ServiceState {
+  final List<ServiceModel> services;
+  const MyServicesLoaded(this.services);
 }
 
 // Estado cuando cargamos las categorías para el Dropdown
 class CategoriesLoaded extends ServiceState {
   final List<CategoryModel> categories;
-  CategoriesLoaded(this.categories);
+  const CategoriesLoaded(this.categories);
   @override
   List<Object?> get props => [categories];
 }
 
 class ServiceSuccess extends ServiceState {
   final String message;
-  ServiceSuccess(this.message);
+  const ServiceSuccess(this.message);
 }
 
 class ServiceError extends ServiceState {
   final String message;
-  ServiceError(this.message);
+  const ServiceError(this.message);
 }

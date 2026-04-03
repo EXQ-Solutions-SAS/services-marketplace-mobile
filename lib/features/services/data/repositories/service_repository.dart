@@ -19,19 +19,37 @@ class ServiceRepository {
     }
   }
 
-  // En ServiceRepository
-  Stream<List<ServiceModel>> getServicesStream() async* {
+  // En service_repository.dart
+
+  Stream<List<ServiceModel>> getServicesStream({String? excludeUserId}) async* {
+    // TRUCO: El bucle debe ejecutar la lógica y LUEGO esperar
     while (true) {
       try {
-        final response = await provider.getServices();
-        final List servicesJson = response.data;
-        yield servicesJson.map((e) => ServiceModel.fromJson(e)).toList();
+        final response = await provider.getServices(
+          excludeUserId: excludeUserId,
+        );
+        final List data = response.data;
+        yield data.map((json) => ServiceModel.fromJson(json)).toList();
       } catch (e) {
-        yield* Stream.error("Error al sincronizar servicios");
+        yield* Stream.error("Error en Marketplace");
       }
-      // Esperamos 5-10 segundos antes de volver a pedir datos (polling)
-      // Esto evita que la app se congele por peticiones infinitas
-      await Future.delayed(const Duration(seconds: 10));
+
+      // La espera va AL FINAL del ciclo
+      await Future.delayed(const Duration(seconds: 5));
+    }
+  }
+
+  Stream<List<ServiceModel>> getMyServicesStream() async* {
+    while (true) {
+      try {
+        final response = await provider.getMyServices();
+        final List data = response.data;
+        yield data.map((json) => ServiceModel.fromJson(json)).toList();
+      } catch (e) {
+        yield* Stream.error("Error en Mis Servicios");
+      }
+
+      await Future.delayed(const Duration(seconds: 5));
     }
   }
 
