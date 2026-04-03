@@ -31,7 +31,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
             icon: const Icon(Icons.add),
             onPressed: () async {
               context.read<ServiceBloc>().add(ResetServiceState());
-              await context.push('/create-service');
+              await context.push('/service-form');
               if (context.mounted) {
                 context.read<ServiceBloc>().add(StreamMyServicesStarted());
               }
@@ -39,11 +39,27 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
           ),
         ],
       ),
-      body: BlocBuilder<ServiceBloc, ServiceState>(
+      body: BlocConsumer<ServiceBloc, ServiceState>(
+        listener: (context, state) {
+          if (state is ServiceSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+          if (state is ServiceError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
         buildWhen: (previous, current) =>
-            current is MyServicesLoaded ||
-            current is ServiceLoading ||
-            current is ServiceError,
+            current is MyServicesLoaded || current is ServiceLoading,
         builder: (context, state) {
           if (state is ServiceLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -62,9 +78,14 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                 final service = services[index];
                 return ServiceCard(
                   service: service,
-                  showActions: true, 
+                  showActions: true,
+                  // En el ServiceCard dentro de MyServicesScreen
                   onEdit: () {
-                    /* Lógica para abrir pantalla de edición */
+                    context.read<ServiceBloc>().add(ResetServiceState());
+                    context.push(
+                      '/service-form',
+                      extra: service,
+                    ); // Pasamos el servicio actual
                   },
                   onDelete: () => _confirmDelete(service.id),
                 );
@@ -90,8 +111,8 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
           ),
           TextButton(
             onPressed: () {
-              // Aquí dispararías un nuevo evento: DeleteServiceRequested(id)
-              Navigator.pop(context);
+              context.read<ServiceBloc>().add(DeleteServiceRequested(id));
+              context.pop();
             },
             child: const Text("Eliminar", style: TextStyle(color: Colors.red)),
           ),

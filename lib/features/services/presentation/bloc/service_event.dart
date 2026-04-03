@@ -38,3 +38,14 @@ class CreateServiceRequested extends ServiceEvent {
   @override
   List<Object?> get props => [title, description, price, categoryId];
 }
+
+class UpdateServiceRequested extends ServiceEvent {
+  final String id;
+  final Map<String, dynamic> data;
+  UpdateServiceRequested(this.id, this.data);
+}
+
+class DeleteServiceRequested extends ServiceEvent {
+  final String id;
+  DeleteServiceRequested(this.id);
+}

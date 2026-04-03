@@ -19,8 +19,6 @@ class ServiceRepository {
     }
   }
 
-  // En service_repository.dart
-
   Stream<List<ServiceModel>> getServicesStream({String? excludeUserId}) async* {
     // TRUCO: El bucle debe ejecutar la lógica y LUEGO esperar
     while (true) {
@@ -70,5 +68,13 @@ class ServiceRepository {
     } catch (e) {
       throw Exception("Error al crear el servicio");
     }
+  }
+
+  Future<void> updateService(String id, Map<String, dynamic> data) async {
+    await provider.updateService(id, data);
+  }
+
+  Future<void> deleteService(String id) async {
+    await provider.deleteService(id);
   }
 }

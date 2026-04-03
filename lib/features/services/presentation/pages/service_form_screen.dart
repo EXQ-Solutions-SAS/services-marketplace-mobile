@@ -1,48 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:services_marketplace_mobile/features/services/data/models/service_model.dart';
 import 'package:services_marketplace_mobile/features/services/presentation/bloc/service_bloc.dart';
 import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
 import 'package:services_marketplace_mobile/features/services/presentation/bloc/service_event.dart';
 import 'package:services_marketplace_mobile/features/services/presentation/bloc/service_state.dart';
 import 'package:go_router/go_router.dart';
-class CreateServiceScreen extends StatefulWidget {
-  const CreateServiceScreen({super.key});
+class ServiceFormScreen extends StatefulWidget {
+  final ServiceModel? service; // Si viene, editamos. Si no, creamos.
+
+  const ServiceFormScreen({super.key, this.service});
 
   @override
-  State<CreateServiceScreen> createState() => _CreateServiceScreenState();
+  State<ServiceFormScreen> createState() => _ServiceFormScreenState();
 }
 
-class _CreateServiceScreenState extends State<CreateServiceScreen> {
+class _ServiceFormScreenState extends State<ServiceFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _priceController = TextEditingController();
+  
+  // Usamos late para inicializarlos con el valor del servicio si existe
+  late TextEditingController _titleController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _priceController;
   String? _selectedCategoryId;
+
+  bool get isEditing => widget.service != null;
 
   @override
   void initState() {
     super.initState();
+    
+    // Inicialización dinámica
+    _titleController = TextEditingController(text: widget.service?.title ?? '');
+    _descriptionController = TextEditingController(text: widget.service?.description ?? '');
+    _priceController = TextEditingController(
+      text: widget.service?.pricePerHour.toString() ?? '',
+    );
+    // Extraemos el ID de la categoría del objeto category
+    _selectedCategoryId = widget.service?.category.id;
+
     // Cargamos las categorías al entrar
     context.read<ServiceBloc>().add(FetchCategoriesRequested());
   }
 
   void _submit() {
     if (_formKey.currentState!.validate() && _selectedCategoryId != null) {
-      context.read<ServiceBloc>().add(
-        CreateServiceRequested(
-          title: _titleController.text,
-          description: _descriptionController.text,
-          price: double.parse(_priceController.text),
-          categoryId: _selectedCategoryId!,
-        ),
-      );
+      if (isEditing) {
+        // EVENTO EDITAR
+        context.read<ServiceBloc>().add(
+          UpdateServiceRequested(
+            widget.service!.id,
+            {
+              "title": _titleController.text,
+              "description": _descriptionController.text,
+              "pricePerHour": double.parse(_priceController.text),
+              "categoryId": _selectedCategoryId,
+            },
+          ),
+        );
+      } else {
+        // EVENTO CREAR
+        context.read<ServiceBloc>().add(
+          CreateServiceRequested(
+            title: _titleController.text,
+            description: _descriptionController.text,
+            price: double.parse(_priceController.text),
+            categoryId: _selectedCategoryId!,
+          ),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Ofrecer nuevo servicio")),
+      appBar: AppBar(
+        title: Text(isEditing ? "Editar servicio" : "Ofrecer nuevo servicio"),
+      ),
       body: BlocListener<ServiceBloc, ServiceState>(
         listener: (context, state) {
           if (state is ServiceSuccess) {
@@ -52,7 +87,7 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
                 backgroundColor: AppTheme.successBlue,
               ),
             );
-            context.pop(); // Volvemos atrás al tener éxito
+            context.pop(); 
           }
           if (state is ServiceError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -77,6 +112,7 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
                     if (state is CategoriesLoaded) {
                       final categories = state.categories;
                       return DropdownButtonFormField<String>(
+                        initialValue: _selectedCategoryId,
                         decoration: const InputDecoration(
                           labelText: "Categoría",
                         ),
@@ -91,9 +127,9 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
                           final selectedCat = categories.firstWhere(
                             (c) => c.id == value,
                           );
-                          if (selectedCat.basePrice != null) {
-                            _priceController.text = selectedCat.basePrice
-                                .toString();
+                          // Solo auto-rellenar precio si estamos creando (para no sobreescribir el actual al editar)
+                          if (!isEditing && selectedCat.basePrice != null) {
+                            _priceController.text = selectedCat.basePrice.toString();
                           }
                         }),
                         validator: (value) =>
@@ -136,7 +172,7 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: const Text("Publicar Servicio"),
+                  child: Text(isEditing ? "Guardar Cambios" : "Publicar Servicio"),
                 ),
               ],
             ),

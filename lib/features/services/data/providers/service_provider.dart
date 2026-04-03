@@ -36,4 +36,8 @@ class ServiceDataProvider {
   Future<Response> updateService(String id, Map<String, dynamic> data) async {
     return await _dio.patch('/services/$id', data: data);
   }
+
+  Future<Response> deleteService(String id) async {
+  return await _dio.delete('/services/$id');
+}
 }

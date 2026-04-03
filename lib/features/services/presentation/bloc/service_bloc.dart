@@ -86,5 +86,31 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
 
       emit(ServiceInitial()); // Volvemos al estado base
     });
+
+    // En ServiceBloc.dart
+    on<DeleteServiceRequested>((event, emit) async {
+      try {
+        await repository.deleteService(event.id);
+
+        // 1. Primero reiniciamos el stream para que el usuario vea
+        // que el card desaparece inmediatamente
+        add(StreamMyServicesStarted());
+
+        // 2. Notificamos el éxito (el listener del Consumer lo atrapará)
+        emit(const ServiceSuccess("Servicio eliminado correctamente"));
+      } catch (e) {
+        emit(ServiceError(e.toString()));
+      }
+    });
+
+    on<UpdateServiceRequested>((event, emit) async {
+      emit(ServiceLoading());
+      try {
+        await repository.updateService(event.id, event.data);
+        emit(const ServiceSuccess("Servicio actualizado"));
+      } catch (e) {
+        emit(ServiceError(e.toString()));
+      }
+    });
   }
 }
