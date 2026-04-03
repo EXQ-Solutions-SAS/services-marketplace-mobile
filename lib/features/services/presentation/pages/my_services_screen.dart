@@ -30,6 +30,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () async {
+              context.read<ServiceBloc>().add(ResetServiceState());
               await context.push('/create-service');
               if (context.mounted) {
                 context.read<ServiceBloc>().add(StreamMyServicesStarted());
@@ -59,28 +60,13 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
               itemCount: services.length,
               itemBuilder: (context, index) {
                 final service = services[index];
-                return Stack(
-                  children: [
-                    ServiceCard(service: service),
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () {
-                              /* Implementaremos editar luego */
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _confirmDelete(service.id),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                return ServiceCard(
+                  service: service,
+                  showActions: true, 
+                  onEdit: () {
+                    /* Lógica para abrir pantalla de edición */
+                  },
+                  onDelete: () => _confirmDelete(service.id),
                 );
               },
             );

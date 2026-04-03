@@ -76,5 +76,15 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         emit(ServiceError(e.toString()));
       }
     });
+
+    on<ResetServiceState>((event, emit) async {
+      // Cancelamos ambos para estar seguros
+      await _marketplaceSubscription?.cancel();
+      await _myServicesSubscription?.cancel();
+      _marketplaceSubscription = null;
+      _myServicesSubscription = null;
+
+      emit(ServiceInitial()); // Volvemos al estado base
+    });
   }
 }

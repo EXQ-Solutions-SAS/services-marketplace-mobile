@@ -16,6 +16,8 @@ class StreamServicesStarted extends ServiceEvent {
 
 class StreamMyServicesStarted extends ServiceEvent {} // Nuevo evento
 
+class ResetServiceState extends ServiceEvent {}
+
 // Cargar categorías para el formulario de creación
 class FetchCategoriesRequested extends ServiceEvent {}
 
