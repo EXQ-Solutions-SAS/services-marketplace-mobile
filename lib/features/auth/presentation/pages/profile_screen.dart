@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
 import 'package:services_marketplace_mobile/features/auth/data/models/user_model.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -106,8 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.primaryOrange)),
                       onPressed: () {
-                        // Aquí navegarás al formulario de "Crear Servicio"
-                        // context.push('/create-service');
+                        context.push('/create-service');
                       },
                       child: const Text("Ofrecer mis Servicios", style: TextStyle(color: AppTheme.primaryOrange)),
                     ),

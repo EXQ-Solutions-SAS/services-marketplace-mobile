@@ -7,6 +7,7 @@ import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth
 import 'package:services_marketplace_mobile/features/auth/presentation/pages/login_screen.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/pages/register_screen.dart';
 import 'package:services_marketplace_mobile/features/home/presentation/pages/home_screen.dart';
+import 'package:services_marketplace_mobile/features/services/presentation/pages/create_service_screen.dart';
 
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
@@ -38,10 +39,11 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
       ),
+      GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
       GoRoute(
-      path: '/',
-      builder: (context, state) => const HomeScreen(),
-    ),
+        path: '/create-service',
+        builder: (context, state) => const CreateServiceScreen(),
+      ),
     ],
   );
 }
