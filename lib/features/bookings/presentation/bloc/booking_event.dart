@@ -2,13 +2,20 @@ import 'package:services_marketplace_mobile/features/bookings/data/models/bookin
 
 abstract class BookingEvent {}
 
-// Para el Cliente
-class FetchCustomerBookingsRequested extends BookingEvent {}
+// Iniciar Streams
+class CustomerBookingsStreamStarted extends BookingEvent {}
+class ProviderBookingsStreamStarted extends BookingEvent {}
 
-// Para el Proveedor
-class FetchProviderBookingsRequested extends BookingEvent {}
+// Detener y Limpiar (Para el Logout que hablamos)
+class StopBookingStream extends BookingEvent {}
 
-// Crear Reserva (Cliente)
+// Actualización interna del Bloc cuando el Stream manda datos
+class BookingsUpdated extends BookingEvent {
+  final List<BookingModel> bookings;
+  BookingsUpdated(this.bookings);
+}
+
+// Acciones (Se mantienen como Future porque son disparos únicos)
 class CreateBookingRequested extends BookingEvent {
   final String serviceId;
   final DateTime date;
@@ -16,7 +23,6 @@ class CreateBookingRequested extends BookingEvent {
   CreateBookingRequested(this.serviceId, this.date, this.hours);
 }
 
-// Cambiar Estado (Ambos, pero principalmente Proveedor)
 class UpdateBookingStatusRequested extends BookingEvent {
   final String bookingId;
   final BookingStatus newStatus;

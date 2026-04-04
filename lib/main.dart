@@ -11,6 +11,7 @@ import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth
 import 'package:services_marketplace_mobile/features/bookings/data/providers/booking_provider.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/repositories/booking_repository.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/booking_bloc.dart';
+import 'package:services_marketplace_mobile/features/navigation/presentation/navigation_bloc.dart';
 import 'package:services_marketplace_mobile/features/services/data/providers/service_provider.dart';
 import 'package:services_marketplace_mobile/features/services/data/repositories/service_repository.dart';
 import 'package:services_marketplace_mobile/features/services/presentation/bloc/service_bloc.dart';
@@ -36,13 +37,15 @@ void main() async {
           create: (context) => ServiceDataProvider(apiClient.dio),
         ),
         RepositoryProvider(
-          create: (context) => ServiceRepository(context.read<ServiceDataProvider>()),
+          create: (context) =>
+              ServiceRepository(context.read<ServiceDataProvider>()),
         ),
         RepositoryProvider(
           create: (context) => BookingDataProvider(apiClient.dio),
         ),
         RepositoryProvider(
-          create: (context) => BookingRepository(context.read<BookingDataProvider>()),
+          create: (context) =>
+              BookingRepository(context.read<BookingDataProvider>()),
         ),
       ],
       child: MultiBlocProvider(
@@ -51,10 +54,19 @@ void main() async {
             create: (context) => AuthBloc(context.read<AuthRepository>()),
           ),
           BlocProvider(
-            create: (context) => ServiceBloc(context.read<ServiceRepository>()),
+            create: (context) => ServiceBloc(
+              context.read<ServiceRepository>(),
+              context.read<AuthBloc>(),
+            ),
           ),
           BlocProvider(
-            create: (context) => BookingBloc(context.read<BookingRepository>()),
+            create: (context) => BookingBloc(
+              context.read<BookingRepository>(),
+              context.read<AuthBloc>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => NavigationBloc(), // No necesita parámetros
           ),
         ],
         child: const MyApp(),
