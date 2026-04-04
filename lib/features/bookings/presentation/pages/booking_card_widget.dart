@@ -175,7 +175,8 @@ class BookingCard extends StatelessWidget {
 
             if (booking.status == BookingStatus.COMPLETED && !hasIReviewed)
               ElevatedButton.icon(
-                onPressed: () => _showReviewModal(context, booking, currentUserId),
+                onPressed: () =>
+                    _showReviewModal(context, booking, currentUserId),
                 icon: const Icon(Icons.star_border),
                 label: Text(
                   isProviderView ? "Calificar Cliente" : "Calificar Servicio",
@@ -402,42 +403,63 @@ class BookingCard extends StatelessWidget {
     int selectedRating = 5;
     final TextEditingController commentController = TextEditingController();
 
-    // Lógica de IDs (Esto se queda igual porque el backend lo necesita)
     final bool isCustomer = booking.customerId == currentUserId;
     final String reviewerId = currentUserId;
     final String revieweeId = isCustomer
-        ? (booking.provider?.id ?? '') // Id del proveedor
-        : booking.customerId; // Id del cliente
+        ? (booking.provider?.id ?? '')
+        : booking.customerId;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
+      isScrollControlled: true, // Permite que suba cuando sale el teclado
+      backgroundColor: const Color(0xFF1A1F24), // Fondo oscuro coherente
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: const Text(
-            "Calificar Experiencia", // Título neutro
-            textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                isCustomer
-                    ? "¿Qué tal te pareció el servicio recibido?"
-                    : "¿Cómo calificarías la interacción con el cliente?",
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                top: 24,
+                left: 24,
+                right: 24,
+                // Ajuste dinámico para que el teclado no tape el input
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
               ),
-              const SizedBox(height: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Barra estética superior
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[700],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Text(
+                    "Calificar Experiencia",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    isCustomer
+                        ? "¿Qué tal te pareció el servicio recibido?"
+                        : "¿Cómo calificarías la interacción con el cliente?",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  ),
+                  const SizedBox(height: 24),
 
-              // Selector de Estrellas
-              StatefulBuilder(
-                builder: (context, setModalState) {
-                  return Row(
+                  // Selector de Estrellas
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (index) {
                       return IconButton(
@@ -446,66 +468,92 @@ class BookingCard extends StatelessWidget {
                               ? Icons.star
                               : Icons.star_border,
                           color: Colors.amber,
-                          size: 36,
+                          size: 40,
                         ),
                         onPressed: () =>
                             setModalState(() => selectedRating = index + 1),
                       );
                     }),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 16),
-              TextField(
-                controller: commentController,
-                maxLines: 3,
-                maxLength: 200, // Limitar comentarios ayuda al diseño
-                decoration: InputDecoration(
-                  hintText: "Escribe un comentario opcional...",
-                  hintStyle: const TextStyle(fontSize: 13),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
                   ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                "Cancelar",
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: () {
-                if (revieweeId.isEmpty) return; // Seguridad extra
+                  const SizedBox(height: 24),
 
-                final review = ReviewModel(
-                  rating: selectedRating,
-                  comment: commentController.text.trim(),
-                  bookingId: booking.id,
-                  reviewerId: reviewerId,
-                  revieweeId: revieweeId,
-                );
+                  // Campo de Texto (Fix de visibilidad)
+                  TextField(
+                    controller: commentController,
+                    maxLines: 3,
+                    maxLength: 200,
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ), // Texto visible
+                    decoration: InputDecoration(
+                      hintText: "Escribe un comentario opcional...",
+                      hintStyle: TextStyle(color: Colors.grey[500]),
+                      fillColor: const Color(0xFF2A2F35),
+                      filled: true,
+                      counterStyle: const TextStyle(color: Colors.grey),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.blueAccent),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
-                context.read<ReviewBloc>().add(SubmitReviewRequested(review));
-                Navigator.pop(context);
-              },
-              child: const Text("Enviar Reseña"),
-            ),
-          ],
+                  // Botones de Acción
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            "Cancelar",
+                            style: TextStyle(color: Colors.grey[400]),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            if (revieweeId.isEmpty) return;
+
+                            final review = ReviewModel(
+                              rating: selectedRating,
+                              comment: commentController.text.trim(),
+                              bookingId: booking.id,
+                              reviewerId: reviewerId,
+                              revieweeId: revieweeId,
+                            );
+
+                            context.read<ReviewBloc>().add(
+                              SubmitReviewRequested(review),
+                            );
+                            Navigator.pop(context);
+                          },
+                          child: const Text(
+                            "Enviar",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
