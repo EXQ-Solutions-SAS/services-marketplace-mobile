@@ -23,7 +23,7 @@ class ReviewModel {
       comment: json['comment'] as String? ?? '',
       reviewerId: json['reviewerId'] as String? ?? '', // Este es el que sí llega
       bookingId: json['bookingId'] as String?,
-      revieweeId: json['revieweeId'] as String?,
+      revieweeId: json['revieweeId'] as String? ?? '',
     );
   }
 }
