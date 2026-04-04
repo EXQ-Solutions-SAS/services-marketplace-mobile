@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:services_marketplace_mobile/features/services/data/models/service_model.dart';
 import 'package:services_marketplace_mobile/features/services/data/repositories/service_repository.dart';
 import 'package:services_marketplace_mobile/features/services/presentation/bloc/service_event.dart';
@@ -8,10 +9,26 @@ import 'package:services_marketplace_mobile/features/services/presentation/bloc/
 
 class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
   final ServiceRepository repository;
+  final AuthBloc _authBloc;
+  StreamSubscription? _authSubscription;
   StreamSubscription? _marketplaceSubscription;
   StreamSubscription? _myServicesSubscription;
 
-  ServiceBloc(this.repository) : super(ServiceInitial()) {
+  ServiceBloc(this.repository, this._authBloc) : super(ServiceInitial()) {
+    _authSubscription = _authBloc.stream.listen((authState) {
+      if (authState is Unauthenticated) {
+        // SI CIERRA SESIÓN, MATAMOS EL STREAM DE DATOS
+        add(StopServiceStream());
+      }
+    });
+
+    on<StopServiceStream>((event, emit) {
+      _marketplaceSubscription?.cancel();
+      _myServicesSubscription?.cancel();
+      _marketplaceSubscription = null;
+      _myServicesSubscription = null;
+      emit(ServiceInitial()); // Limpiamos el estado
+    });
     // 1. Manejar carga de servicios
     // Marketplace
     on<StreamServicesStarted>((event, emit) async {
@@ -87,7 +104,6 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
       emit(ServiceInitial()); // Volvemos al estado base
     });
 
-    // En ServiceBloc.dart
     on<DeleteServiceRequested>((event, emit) async {
       try {
         await repository.deleteService(event.id);
@@ -112,5 +128,13 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         emit(ServiceError(e.toString()));
       }
     });
+
+    @override
+    Future<void> close() {
+      _authSubscription?.cancel();
+      _marketplaceSubscription?.cancel();
+      _myServicesSubscription?.cancel();
+      return super.close();
+    }
   }
 }

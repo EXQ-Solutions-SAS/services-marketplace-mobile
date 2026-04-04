@@ -79,6 +79,7 @@ class _MyServicesScreenState extends State<MyServicesScreen> {
                 return ServiceCard(
                   service: service,
                   showActions: true,
+                  onTap: null,
                   // En el ServiceCard dentro de MyServicesScreen
                   onEdit: () {
                     context.read<ServiceBloc>().add(ResetServiceState());

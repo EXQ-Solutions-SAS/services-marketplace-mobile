@@ -49,3 +49,5 @@ class DeleteServiceRequested extends ServiceEvent {
   final String id;
   DeleteServiceRequested(this.id);
 }
+
+class StopServiceStream extends ServiceEvent {}

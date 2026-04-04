@@ -8,6 +8,13 @@ import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
 import 'package:services_marketplace_mobile/features/auth/data/providers/auth_provider.dart';
 import 'package:services_marketplace_mobile/features/auth/data/repositories/auth_repository.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/providers/booking_provider.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/providers/payment_provider.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/repositories/booking_repository.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/repositories/payment_repository.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/booking_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/payment_bloc.dart';
+import 'package:services_marketplace_mobile/features/navigation/presentation/navigation_bloc.dart';
 import 'package:services_marketplace_mobile/features/services/data/providers/service_provider.dart';
 import 'package:services_marketplace_mobile/features/services/data/repositories/service_repository.dart';
 import 'package:services_marketplace_mobile/features/services/presentation/bloc/service_bloc.dart';
@@ -23,30 +30,56 @@ void main() async {
   runApp(
     MultiRepositoryProvider(
       providers: [
-        // 1. Inyectamos el cliente Dio a través del Data Provider
         RepositoryProvider(
           create: (context) => AuthDataProvider(apiClient.dio),
         ),
-        // 2. Inyectamos el Provider al Repository
         RepositoryProvider(
           create: (context) => AuthRepository(context.read<AuthDataProvider>()),
         ),
-
         RepositoryProvider(
           create: (context) => ServiceDataProvider(apiClient.dio),
         ),
         RepositoryProvider(
-          create: (context) => ServiceRepository(context.read<ServiceDataProvider>()),
+          create: (context) =>
+              ServiceRepository(context.read<ServiceDataProvider>()),
+        ),
+        RepositoryProvider(
+          create: (context) => BookingDataProvider(apiClient.dio),
+        ),
+        RepositoryProvider(
+          create: (context) =>
+              BookingRepository(context.read<BookingDataProvider>()),
+        ),
+        RepositoryProvider(
+          create: (context) => PaymentDataProvider(apiClient.dio),
+        ),
+        RepositoryProvider(
+          create: (context) =>
+              PaymentRepository(context.read<PaymentDataProvider>()),
         ),
       ],
       child: MultiBlocProvider(
         providers: [
-          // 3. El BLoC queda disponible para TODA la app
           BlocProvider(
             create: (context) => AuthBloc(context.read<AuthRepository>()),
           ),
           BlocProvider(
-            create: (context) => ServiceBloc(context.read<ServiceRepository>()),
+            create: (context) => ServiceBloc(
+              context.read<ServiceRepository>(),
+              context.read<AuthBloc>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => BookingBloc(
+              context.read<BookingRepository>(),
+              context.read<AuthBloc>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => NavigationBloc(), // No necesita parámetros
+          ),
+          BlocProvider(
+            create: (context) => PaymentBloc(context.read<PaymentRepository>()),
           ),
         ],
         child: const MyApp(),

@@ -1,64 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
-import 'package:services_marketplace_mobile/features/auth/data/models/user_model.dart';
-import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/pages/profile_screen.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/pages/customer_bookings_screen.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/pages/provider_bookings_screen.dart';
+import 'package:services_marketplace_mobile/features/navigation/presentation/navigation_bloc.dart';
+import 'package:services_marketplace_mobile/features/navigation/presentation/navigation_event.dart';
+import 'package:services_marketplace_mobile/features/navigation/presentation/navigation_state.dart';
 import 'package:services_marketplace_mobile/features/services/presentation/pages/marketplace_screen.dart';
 import 'package:services_marketplace_mobile/features/services/presentation/pages/my_services_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-
-  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, authState) {
-        // 1. Verificamos si es Provider
-        final bool isProvider =
-            authState is Authenticated &&
-            authState.user.role == UserRole.PROVIDER;
-
-        // 2. Definimos las pantallas dinámicamente
-        final List<Widget> screens = [
-          const MarketplaceScreen(),
-          if (isProvider) const MyServicesScreen(), // <--- Pantalla nueva
-          const ProfileScreen(),
-        ];
+    return BlocBuilder<NavigationBloc, NavigationState>(
+      builder: (context, navState) {
+        // Definimos qué vemos según el modo
+        final List<Widget> screens = navState.isProviderMode 
+          ? [const ProviderBookingsScreen(), const MyServicesScreen(), const ProfileScreen()]
+          : [const MarketplaceScreen(), const CustomerBookingsScreen(), const ProfileScreen()];
 
         return Scaffold(
-          body: IndexedStack(index: _selectedIndex, children: screens),
+          body: IndexedStack(
+            index: navState.selectedIndex,
+            children: screens,
+          ),
           bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: (index) => setState(() => _selectedIndex = index),
-            backgroundColor: AppTheme.backgroundDark,
+            currentIndex: navState.selectedIndex,
+            onTap: (index) => context.read<NavigationBloc>().add(ChangeTab(index)),
             selectedItemColor: AppTheme.primaryOrange,
-            unselectedItemColor: Colors.white54,
-            items: [
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.search),
-                label: 'Explorar',
-              ),
-              if (isProvider)
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.business_center),
-                  label: 'Mis Servicios',
-                ),
-              const BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'Perfil',
-              ),
-            ],
+            items: navState.isProviderMode 
+                ? _providerItems() 
+                : _customerItems(),
           ),
         );
       },
     );
   }
+
+  List<BottomNavigationBarItem> _customerItems() => [
+    const BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Explorar'),
+    const BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'Mis Pedidos'),
+    const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
+  ];
+
+  List<BottomNavigationBarItem> _providerItems() => [
+    const BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+    const BottomNavigationBarItem(icon: Icon(Icons.business_center), label: 'Mis Servicios'),
+    const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
+  ];
 }
