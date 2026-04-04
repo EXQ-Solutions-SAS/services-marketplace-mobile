@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/models/booking_model.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/review_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/review_state.dart';
 import '../bloc/booking_bloc.dart';
 import '../bloc/booking_event.dart';
 import '../bloc/booking_state.dart';
@@ -23,22 +26,50 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<BookingBloc, BookingState>(
-      listener: (context, state) {
-        if (state is BookingSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-        if (state is BookingError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<BookingBloc, BookingState>(
+          listener: (context, state) {
+            if (state is BookingSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+            if (state is BookingError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        ),
+        BlocListener<ReviewBloc, ReviewState>(
+          listener: (context, state) {
+            if (state is ReviewCreateSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppTheme.successBlue,
+                ),
+              );
+            }
+
+            if (state is ReviewError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(title: const Text("Panel de Proveedor")),
         body: BlocBuilder<BookingBloc, BookingState>(

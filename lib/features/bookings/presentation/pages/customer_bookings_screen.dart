@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/models/booking_model.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/payment_bloc.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/payment_state.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/review_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/review_state.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/pages/booking_card_widget.dart';
 import '../bloc/booking_bloc.dart';
 import '../bloc/booking_event.dart';
@@ -34,7 +37,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: Colors.green,
+                  backgroundColor: AppTheme.successBlue,
                 ),
               );
             }
@@ -58,7 +61,7 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text("¡Pago procesado con éxito!"),
-                  backgroundColor: Colors.blueAccent,
+                  backgroundColor: AppTheme.successBlue,
                   duration: Duration(seconds: 3),
                 ),
               );
@@ -75,6 +78,31 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
             }
           },
         ),
+        BlocListener<ReviewBloc, ReviewState>(
+          listener: (context, state) {
+            if (state is ReviewCreateSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppTheme.successBlue,
+                ),
+              );
+
+              // 🔥 ESTA ES LA CLAVE: Refrescamos la lista de reservas
+              // para que desaparezca el botón de "Calificar"
+              context.read<BookingBloc>().add(CustomerBookingsStreamStarted());
+            }
+
+            if (state is ReviewError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+        ),
       ],
       child: Scaffold(
         appBar: AppBar(title: const Text("Mis Solicitudes")),
@@ -84,17 +112,23 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
               return const Center(child: CircularProgressIndicator());
             }
 
+            // En CustomerBookingsScreen
             if (state is BookingsLoaded) {
+              print(  "DEBUG: Bookings cargadas: ${state.bookings.length} reservas"); // Debug
+              // 1. Asegúrate de incluir COMPLETED aquí
               final activeBookings = state.bookings
                   .where((b) => b.status != BookingStatus.CANCELLED)
                   .toList();
+
               if (activeBookings.isEmpty) {
                 return const Center(
                   child: Text("No has realizado reservas aún."),
                 );
               }
 
+              // 2. Agrega una Key al ListView para que Flutter sepa que debe reconstruirlo
               return ListView.builder(
+                key: ValueKey(activeBookings.length),
                 padding: const EdgeInsets.all(16),
                 itemCount: activeBookings.length,
                 itemBuilder: (context, index) => BookingCard(

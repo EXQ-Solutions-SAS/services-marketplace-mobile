@@ -1,12 +1,7 @@
+import 'package:services_marketplace_mobile/features/bookings/data/models/review_model.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/models/transaction_model.dart';
 
-enum BookingStatus {
-  PENDING,
-  ACCEPTED,
-  PAID,
-  COMPLETED,
-  CANCELLED,
-}
+enum BookingStatus { PENDING, ACCEPTED, PAID, COMPLETED, CANCELLED }
 
 class BookingService {
   final String id;
@@ -51,9 +46,11 @@ class BookingModel {
 
   final BookingService service;
   // Ambos opcionales para adaptarse a quién hace la consulta
+  final String customerId;
   final BookingUser? customer;
   final BookingUser? provider;
   final TransactionModel? transaction;
+  final List<ReviewModel> reviews; //
 
   BookingModel({
     required this.id,
@@ -62,14 +59,17 @@ class BookingModel {
     required this.scheduledAt,
     required this.status,
     required this.service,
+    required this.customerId,
     this.customer,
     this.provider,
     this.transaction,
+    this.reviews = const [],
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
     return BookingModel(
       id: json['id'],
+      customerId: json['customerId'],
       hours: json['hours'],
       totalPrice: (json['totalPrice'] as num).toDouble(),
       scheduledAt: DateTime.parse(json['scheduledAt']),
@@ -91,6 +91,17 @@ class BookingModel {
       transaction: json['transaction'] != null
           ? TransactionModel.fromJson(json['transaction'])
           : null,
+      reviews: json['reviews'] != null
+          ? (json['reviews'] as List).map((r) {
+              try {
+                return ReviewModel.fromJson(r);
+              } catch (e) {
+                // Si falla una reseña, devolvemos un modelo mínimo para no romper la app
+                print("Error mapeando una reseña: $e");
+                return ReviewModel(reviewerId: r['reviewerId'] ?? '');
+              }
+            }).toList()
+          : [],
     );
   }
 }
