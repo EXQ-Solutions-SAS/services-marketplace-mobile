@@ -87,7 +87,6 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
       emit(ServiceInitial()); // Volvemos al estado base
     });
 
-    // En ServiceBloc.dart
     on<DeleteServiceRequested>((event, emit) async {
       try {
         await repository.deleteService(event.id);
