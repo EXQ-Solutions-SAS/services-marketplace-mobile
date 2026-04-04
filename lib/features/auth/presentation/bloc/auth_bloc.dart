@@ -39,6 +39,8 @@ class AuthUpdateProfileRequested extends AuthEvent {
 abstract class AuthState extends Equatable {
   @override
   List<Object?> get props => [];
+
+  UserModel? get user => this is Authenticated ? (this as Authenticated).user : null;
 }
 
 class AuthInitial extends AuthState {}

@@ -10,10 +10,13 @@ import 'package:services_marketplace_mobile/features/auth/data/repositories/auth
 import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/providers/booking_provider.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/providers/payment_provider.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/providers/review_provider.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/repositories/booking_repository.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/repositories/payment_repository.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/repositories/review_repository.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/booking_bloc.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/payment_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/review_bloc.dart';
 import 'package:services_marketplace_mobile/features/navigation/presentation/navigation_bloc.dart';
 import 'package:services_marketplace_mobile/features/services/data/providers/service_provider.dart';
 import 'package:services_marketplace_mobile/features/services/data/repositories/service_repository.dart';
@@ -57,6 +60,13 @@ void main() async {
           create: (context) =>
               PaymentRepository(context.read<PaymentDataProvider>()),
         ),
+        RepositoryProvider(
+          create: (context) => ReviewDataProvider(apiClient.dio),
+        ),
+        RepositoryProvider(
+          create: (context) =>
+              ReviewRepository(context.read<ReviewDataProvider>()),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -81,6 +91,9 @@ void main() async {
           BlocProvider(
             create: (context) => PaymentBloc(context.read<PaymentRepository>()),
           ),
+          BlocProvider(
+              create: (context) => ReviewBloc(context.read<ReviewRepository>()),
+            ),
         ],
         child: const MyApp(),
       ),

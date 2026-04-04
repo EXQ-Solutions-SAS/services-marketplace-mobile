@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/models/booking_model.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/models/review_model.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/models/transaction_model.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/booking_bloc.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/booking_event.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/payment_bloc.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/payment_event.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/review_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/review_event.dart';
 
 class BookingCard extends StatelessWidget {
   final BookingModel booking;
@@ -20,6 +24,12 @@ class BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context
+        .read<AuthBloc>()
+        .state; // Suponiendo que tienes un AuthBloc
+    final String currentUserId =
+        authState.user?.id ??
+        ''; // ID del usuario actual para lógica de reseñas
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -42,22 +52,22 @@ class BookingCard extends StatelessWidget {
             if (booking.customer?.phone != null && isProviderView)
               _buildInfoRow(Icons.phone, "Tel: ${booking.customer!.phone}"),
             const Divider(),
-            _buildFooter(context),
+            _buildFooter(context, currentUserId),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
+  Widget _buildFooter(BuildContext context, String currentUserId) {
     final now = DateTime.now();
     final isPastTime = now.isAfter(booking.scheduledAt);
-
-    // 1. Definimos si ya está pagado (Por el status del booking o de la transacción)
-    // Usamos el nuevo status 'PAID' que corregimos en el backend
     final bool isPaid =
         booking.status == BookingStatus.PAID ||
         booking.transaction?.status == TransactionStatus.COMPLETED;
+    final bool hasIReviewed = booking.reviews.any(
+      (r) => r.reviewerId == currentUserId,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -160,6 +170,18 @@ class BookingCard extends StatelessWidget {
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
                   ),
+                ),
+              ),
+
+            if (booking.status == BookingStatus.COMPLETED && !hasIReviewed)
+              ElevatedButton.icon(
+                onPressed: () => _showReviewModal(context, booking, currentUserId),
+                icon: const Icon(Icons.star_border),
+                label: Text(
+                  isProviderView ? "Calificar Cliente" : "Calificar Servicio",
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber[800],
                 ),
               ),
           ],
@@ -367,6 +389,123 @@ class BookingCard extends StatelessWidget {
             amount: booking.totalPrice,
             method: method,
           ),
+        );
+      },
+    );
+  }
+
+  void _showReviewModal(
+    BuildContext context,
+    BookingModel booking,
+    String currentUserId,
+  ) {
+    int selectedRating = 5;
+    final TextEditingController commentController = TextEditingController();
+
+    // Lógica de IDs (Esto se queda igual porque el backend lo necesita)
+    final bool isCustomer = booking.customerId == currentUserId;
+    final String reviewerId = currentUserId;
+    final String revieweeId = isCustomer
+        ? (booking.provider?.id ?? '') // Id del proveedor
+        : booking.customerId; // Id del cliente
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            "Calificar Experiencia", // Título neutro
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isCustomer
+                    ? "¿Qué tal te pareció el servicio recibido?"
+                    : "¿Cómo calificarías la interacción con el cliente?",
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+
+              // Selector de Estrellas
+              StatefulBuilder(
+                builder: (context, setModalState) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < selectedRating
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: Colors.amber,
+                          size: 36,
+                        ),
+                        onPressed: () =>
+                            setModalState(() => selectedRating = index + 1),
+                      );
+                    }),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 16),
+              TextField(
+                controller: commentController,
+                maxLines: 3,
+                maxLength: 200, // Limitar comentarios ayuda al diseño
+                decoration: InputDecoration(
+                  hintText: "Escribe un comentario opcional...",
+                  hintStyle: const TextStyle(fontSize: 13),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                "Cancelar",
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                if (revieweeId.isEmpty) return; // Seguridad extra
+
+                final review = ReviewModel(
+                  rating: selectedRating,
+                  comment: commentController.text.trim(),
+                  bookingId: booking.id,
+                  reviewerId: reviewerId,
+                  revieweeId: revieweeId,
+                );
+
+                context.read<ReviewBloc>().add(SubmitReviewRequested(review));
+                Navigator.pop(context);
+              },
+              child: const Text("Enviar Reseña"),
+            ),
+          ],
         );
       },
     );
