@@ -8,10 +8,10 @@ class ApiClient {
 
   ApiClient() {
     // Sacamos la URL del .env dependiendo de la plataforma
-    final baseUrl = Platform.isAndroid 
-        ? dotenv.env['API_URL_ANDROID'] 
+    final baseUrl = Platform.isAndroid
+        ? dotenv.env['API_URL_ANDROID']
         : dotenv.env['API_URL_IOS'];
-dio = Dio(
+    dio = Dio(
       BaseOptions(
         baseUrl: baseUrl ?? 'http://localhost:3000',
         connectTimeout: const Duration(seconds: 5),
@@ -27,15 +27,15 @@ dio = Dio(
         onRequest: (options, handler) async {
           // 1. Obtenemos el usuario actual de Firebase
           final user = FirebaseAuth.instance.currentUser;
-          
+
           if (user != null) {
             // 2. Obtenemos el ID Token (fresquito, Firebase lo refresca si expiró)
             final token = await user.getIdToken();
-            
+
             // 3. Lo metemos en el Header Authorization
             options.headers['Authorization'] = 'Bearer $token';
           }
-          
+
           return handler.next(options); // Continúa la petición
         },
         onError: (DioException e, handler) {
@@ -46,6 +46,15 @@ dio = Dio(
     );
 
     // El LogInterceptor siempre de último para ver los headers ya inyectados
-    dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+    dio.interceptors.add(
+      LogInterceptor(
+        request: false, // Desactiva el log de la URL de petición
+        requestHeader: false,
+        responseUrl: false,
+        responseHeader: false,
+        responseBody: false, // Esto es lo que más espacio ocupa
+        error: true, // DEJA ESTO EN TRUE para ver por qué falla el pago
+      ),
+    );
   }
 }

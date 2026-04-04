@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/models/booking_model.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/models/transaction_model.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/booking_bloc.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/booking_event.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/payment_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/payment_event.dart';
 
 class BookingCard extends StatelessWidget {
   final BookingModel booking;
@@ -50,6 +53,12 @@ class BookingCard extends StatelessWidget {
     final now = DateTime.now();
     final isPastTime = now.isAfter(booking.scheduledAt);
 
+    // 1. Definimos si ya está pagado (Por el status del booking o de la transacción)
+    // Usamos el nuevo status 'PAID' que corregimos en el backend
+    final bool isPaid =
+        booking.status == BookingStatus.PAID ||
+        booking.transaction?.status == TransactionStatus.COMPLETED;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -76,7 +85,7 @@ class BookingCard extends StatelessWidget {
           runSpacing: 8,
           alignment: WrapAlignment.end,
           children: [
-            // Lógica de CANCELAR
+            // BOTÓN CANCELAR: Se muestra si está pendiente o aceptado pero no pagado
             if (booking.status == BookingStatus.PENDING ||
                 booking.status == BookingStatus.ACCEPTED)
               OutlinedButton(
@@ -88,31 +97,70 @@ class BookingCard extends StatelessWidget {
                 child: const Text("Cancelar"),
               ),
 
-            // Lógica de ACEPTAR (Solo Provider + PENDING)
+            // BOTÓN ACEPTAR: Solo para el Proveedor cuando está PENDING
             if (isProviderView && booking.status == BookingStatus.PENDING)
               ElevatedButton(
                 onPressed: () => _updateStatus(context, BookingStatus.ACCEPTED),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
                   foregroundColor: Colors.white,
-                  minimumSize: const Size(120, 45),
                 ),
                 child: const Text("Aceptar"),
               ),
 
-            // Lógica de COMPLETAR (Solo Provider + ACCEPTED + Pasada la hora)
-            if (isProviderView &&
+            // BOTÓN PAGAR: Solo para el Cliente, si está ACCEPTED y NO ha pagado
+            if (!isProviderView &&
                 booking.status == BookingStatus.ACCEPTED &&
-                isPastTime)
+                isPastTime &&
+                !isPaid)
+              ElevatedButton.icon(
+                onPressed: () => _showPaymentModal(context, booking),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.account_balance_wallet, size: 18),
+                label: const Text("Pagar Servicio"),
+              ),
+
+            // INDICADOR DE PAGO: Un chip visual para confirmar que el dinero ya está en el sistema
+            if (isPaid && booking.status != BookingStatus.COMPLETED)
+              const Chip(
+                backgroundColor: Color(0xFF1E2329),
+                avatar: Icon(Icons.check_circle, color: Colors.green, size: 20),
+                label: Text(
+                  "Pago Confirmado",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+
+            // BOTÓN COMPLETAR: Solo para el Proveedor y SOLO si el estado es PAID
+            if (isProviderView && booking.status == BookingStatus.PAID)
               ElevatedButton(
                 onPressed: () =>
                     _updateStatus(context, BookingStatus.COMPLETED),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Colors.blueAccent,
                   foregroundColor: Colors.white,
-                  minimumSize: const Size(120, 45),
                 ),
-                child: const Text("Completar"),
+                child: const Text("Finalizar Servicio"),
+              ),
+
+            // AVISO PARA EL PROVEEDOR: Si ya aceptó pero el cliente no ha pagado
+            if (isProviderView &&
+                booking.status == BookingStatus.ACCEPTED &&
+                isPastTime &&
+                !isPaid)
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text(
+                  "Esperando pago del cliente...",
+                  style: TextStyle(
+                    color: Colors.orange,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
               ),
           ],
         ),
@@ -182,6 +230,9 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.ACCEPTED:
         statusColor = Colors.blue;
         break;
+      case BookingStatus.PAID:
+        statusColor = Colors.pinkAccent;
+        break;
       case BookingStatus.COMPLETED:
         statusColor = Colors.green;
         break;
@@ -237,4 +288,87 @@ class BookingCard extends StatelessWidget {
       ),
     );
   } // Aquí va el título y el Badge de estado
+
+  void _showPaymentModal(BuildContext context, BookingModel booking) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      backgroundColor: const Color(0xFF1A1F24), // Fondo oscuro para que combine
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Finalizar Pago",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Total a transferir: \$${booking.totalPrice.toStringAsFixed(0)}",
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+
+              // Opciones de Pago
+              _paymentOption(
+                context,
+                icon: Icons.credit_card,
+                title: "Tarjeta de Crédito/Débito",
+                method: "CARD",
+                booking: booking,
+              ),
+              _paymentOption(
+                context,
+                icon: Icons.account_balance,
+                title: "Transferencia Bancaria",
+                method: "TRANSFER",
+                booking: booking,
+              ),
+              _paymentOption(
+                context,
+                icon: Icons.payments,
+                title: "Efectivo",
+                method: "CASH",
+                booking: booking,
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _paymentOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String method,
+    required BookingModel booking,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.blueAccent),
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      onTap: () {
+        Navigator.pop(context); // Cierra el modal
+        // Disparamos el proceso de pago
+        context.read<PaymentBloc>().add(
+          ProcessPaymentRequested(
+            bookingId: booking.id,
+            amount: booking.totalPrice,
+            method: method,
+          ),
+        );
+      },
+    );
+  }
 }

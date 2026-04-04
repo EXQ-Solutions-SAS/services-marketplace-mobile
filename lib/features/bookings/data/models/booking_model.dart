@@ -1,4 +1,12 @@
-enum BookingStatus { PENDING, ACCEPTED, COMPLETED, CANCELLED }
+import 'package:services_marketplace_mobile/features/bookings/data/models/transaction_model.dart';
+
+enum BookingStatus {
+  PENDING,
+  ACCEPTED,
+  PAID,
+  COMPLETED,
+  CANCELLED,
+}
 
 class BookingService {
   final String id;
@@ -40,11 +48,12 @@ class BookingModel {
   final double totalPrice;
   final DateTime scheduledAt;
   final BookingStatus status;
-  
+
   final BookingService service;
   // Ambos opcionales para adaptarse a quién hace la consulta
-  final BookingUser? customer; 
-  final BookingUser? provider; 
+  final BookingUser? customer;
+  final BookingUser? provider;
+  final TransactionModel? transaction;
 
   BookingModel({
     required this.id,
@@ -55,6 +64,7 @@ class BookingModel {
     required this.service,
     this.customer,
     this.provider,
+    this.transaction,
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
@@ -68,14 +78,18 @@ class BookingModel {
         orElse: () => BookingStatus.PENDING,
       ),
       service: BookingService.fromJson(json['service']),
-      
+
       // Mapeo seguro: si el objeto no viene en el JSON, queda como null
-      customer: json['customer'] != null 
-          ? BookingUser.fromJson(json['customer']) 
+      customer: json['customer'] != null
+          ? BookingUser.fromJson(json['customer'])
           : null,
-          
-      provider: json['provider'] != null 
-          ? BookingUser.fromJson(json['provider']['user'] ?? json['provider']) 
+
+      provider: json['provider'] != null
+          ? BookingUser.fromJson(json['provider']['user'] ?? json['provider'])
+          : null,
+
+      transaction: json['transaction'] != null
+          ? TransactionModel.fromJson(json['transaction'])
           : null,
     );
   }

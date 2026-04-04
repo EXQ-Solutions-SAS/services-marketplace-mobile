@@ -9,8 +9,11 @@ import 'package:services_marketplace_mobile/features/auth/data/providers/auth_pr
 import 'package:services_marketplace_mobile/features/auth/data/repositories/auth_repository.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/providers/booking_provider.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/providers/payment_provider.dart';
 import 'package:services_marketplace_mobile/features/bookings/data/repositories/booking_repository.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/repositories/payment_repository.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/booking_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/payment_bloc.dart';
 import 'package:services_marketplace_mobile/features/navigation/presentation/navigation_bloc.dart';
 import 'package:services_marketplace_mobile/features/services/data/providers/service_provider.dart';
 import 'package:services_marketplace_mobile/features/services/data/repositories/service_repository.dart';
@@ -47,6 +50,13 @@ void main() async {
           create: (context) =>
               BookingRepository(context.read<BookingDataProvider>()),
         ),
+        RepositoryProvider(
+          create: (context) => PaymentDataProvider(apiClient.dio),
+        ),
+        RepositoryProvider(
+          create: (context) =>
+              PaymentRepository(context.read<PaymentDataProvider>()),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -67,6 +77,9 @@ void main() async {
           ),
           BlocProvider(
             create: (context) => NavigationBloc(), // No necesita parámetros
+          ),
+          BlocProvider(
+            create: (context) => PaymentBloc(context.read<PaymentRepository>()),
           ),
         ],
         child: const MyApp(),
