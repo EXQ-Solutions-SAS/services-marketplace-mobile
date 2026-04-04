@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/models/booking_model.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/pages/booking_card_widget.dart';
 import '../bloc/booking_bloc.dart';
 import '../bloc/booking_event.dart';
@@ -39,14 +40,15 @@ class _CustomerBookingsScreenState extends State<CustomerBookingsScreen> {
             }
 
             if (state is BookingsLoaded) {
-              if (state.bookings.isEmpty) {
+              final activeBookings = state.bookings.where((b) => b.status != BookingStatus.CANCELLED).toList();
+              if (activeBookings.isEmpty) {
                 return const Center(child: Text("No has realizado reservas aún."));
               }
-
+              
               return  ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: state.bookings.length,
-                  itemBuilder: (context, index) => BookingCard(booking: state.bookings[index], isProviderView: false),
+                  itemCount: activeBookings.length,
+                  itemBuilder: (context, index) => BookingCard(booking: activeBookings[index], isProviderView: false),
               );
             }
             return const SizedBox();

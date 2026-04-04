@@ -19,6 +19,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       if (authState is Unauthenticated) add(StopBookingStream());
     });
 
+
     // STREAM CLIENTE
     on<CustomerBookingsStreamStarted>((event, emit) {
       _bookingSubscription?.cancel();

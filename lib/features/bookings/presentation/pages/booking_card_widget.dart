@@ -47,81 +47,121 @@ class BookingCard extends StatelessWidget {
   }
 
   Widget _buildFooter(BuildContext context) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch, // Estira los botones al ancho total
-    children: [
-      // 1. Fila del Precio (Arriba)
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            "Total a pagar",
-            style: TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          Text(
-            "\$${booking.totalPrice.toStringAsFixed(0)}",
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue,
+    final now = DateTime.now();
+    final isPastTime = now.isAfter(booking.scheduledAt);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Total a pagar",
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
+            Text(
+              "\$${booking.totalPrice.toStringAsFixed(0)}",
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.end,
+          children: [
+            // Lógica de CANCELAR
+            if (booking.status == BookingStatus.PENDING ||
+                booking.status == BookingStatus.ACCEPTED)
+              OutlinedButton(
+                onPressed: () => _handleCancelation(context, isPastTime),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                ),
+                child: const Text("Cancelar"),
+              ),
+
+            // Lógica de ACEPTAR (Solo Provider + PENDING)
+            if (isProviderView && booking.status == BookingStatus.PENDING)
+              ElevatedButton(
+                onPressed: () => _updateStatus(context, BookingStatus.ACCEPTED),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(120, 45),
+                ),
+                child: const Text("Aceptar"),
+              ),
+
+            // Lógica de COMPLETAR (Solo Provider + ACCEPTED + Pasada la hora)
+            if (isProviderView &&
+                booking.status == BookingStatus.ACCEPTED &&
+                isPastTime)
+              ElevatedButton(
+                onPressed: () =>
+                    _updateStatus(context, BookingStatus.COMPLETED),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(120, 45),
+                ),
+                child: const Text("Completar"),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _handleCancelation(BuildContext context, bool isPastTime) {
+    if (!isPastTime) {
+      // Caso 1: Cancelación normal (antes de la hora)
+      _updateStatus(context, BookingStatus.CANCELLED);
+      return;
+    }
+
+    // Caso 2: Ya pasó la hora o está en curso, advertir sobre la multa
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.red),
+            SizedBox(width: 10),
+            Text("¡Atención!"),
+          ],
+        ),
+        content: Text(
+          isProviderView
+              ? "Como el servicio ya debería haber iniciado, cancelar ahora podría afectar tu calificación y generar cargos administrativos."
+              : "El servicio ya está en curso. Si cancelas ahora, no se realizará el reembolso del depósito por políticas de cancelación tardía.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Regresar"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext); // Cierra el modal
+              _updateStatus(
+                context,
+                BookingStatus.CANCELLED,
+              ); // Ejecuta la cancelación
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Confirmar y Cancelar"),
           ),
         ],
       ),
-      const SizedBox(height: 12), // Espacio entre precio y botones
-
-      // 2. Bloque de Botones (Abajo)
-      // Usamos un Wrap para que si hay muchos botones, bajen solitos sin romperse
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        alignment: WrapAlignment.end, // Los alinea a la derecha
-        children: [
-          // Botón Cancelar
-          if (booking.status == BookingStatus.PENDING)
-            OutlinedButton(
-              onPressed: () => _updateStatus(context, BookingStatus.CANCELLED),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
-                side: const BorderSide(color: Colors.red),
-              ),
-              child: const Text("Cancelar"),
-            ),
-
-          // Botón Aceptar (Solo Provider)
-          if (isProviderView && booking.status == BookingStatus.PENDING)
-            ElevatedButton(
-              onPressed: () => _updateStatus(context, BookingStatus.ACCEPTED),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange, // Como en tu imagen
-                foregroundColor: Colors.white,
-                minimumSize: const Size(120, 45), // Le damos un buen tamaño
-              ),
-              child: const Text("Aceptar"),
-            ),
-
-          // Botón Completar (Solo Provider)
-          if (isProviderView && booking.status == BookingStatus.ACCEPTED)
-            ElevatedButton(
-              onPressed: _canComplete() 
-                  ? () => _updateStatus(context, BookingStatus.COMPLETED)
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(120, 45),
-              ),
-              child: const Text("Completar"),
-            ),
-        ],
-      ),
-    ],
-  );
-}
-  // Validación de tiempo que mencionaste
-  bool _canComplete() {
-    // Solo permite completar si ya pasó la hora de la cita
-    return DateTime.now().isAfter(booking.scheduledAt);
+    );
   }
 
   void _updateStatus(BuildContext context, BookingStatus status) {
@@ -185,12 +225,12 @@ class BookingCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.grey[600]),
+          Icon(icon, size: 16, color: Colors.grey[200]),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(color: Colors.grey[800], fontSize: 14),
+              style: TextStyle(color: Colors.grey[300], fontSize: 14),
             ),
           ),
         ],

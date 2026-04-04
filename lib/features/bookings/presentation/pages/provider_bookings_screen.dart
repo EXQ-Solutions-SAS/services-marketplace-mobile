@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/data/models/booking_model.dart';
 import '../bloc/booking_bloc.dart';
 import '../bloc/booking_event.dart';
 import '../bloc/booking_state.dart';
@@ -50,7 +51,9 @@ class _ProviderBookingsScreenState extends State<ProviderBookingsScreen> {
             }
 
             if (state is BookingsLoaded) {
-              final bookings = state.bookings;
+              final bookings = state.bookings
+                  .where((b) => b.status != BookingStatus.CANCELLED)
+                  .toList();
 
               if (bookings.isEmpty) {
                 return const Center(

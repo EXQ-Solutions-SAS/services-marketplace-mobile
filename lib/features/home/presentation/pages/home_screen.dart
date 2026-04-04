@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
-import 'package:services_marketplace_mobile/features/auth/data/models/user_model.dart';
-import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/pages/profile_screen.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/pages/customer_bookings_screen.dart';
 import 'package:services_marketplace_mobile/features/bookings/presentation/pages/provider_bookings_screen.dart';

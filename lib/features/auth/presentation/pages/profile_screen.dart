@@ -4,9 +4,13 @@ import 'package:services_marketplace_mobile/core/theme/app_theme.dart';
 import 'package:services_marketplace_mobile/features/auth/data/models/user_model.dart';
 import 'package:services_marketplace_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/booking_bloc.dart';
+import 'package:services_marketplace_mobile/features/bookings/presentation/bloc/booking_event.dart';
 import 'package:services_marketplace_mobile/features/navigation/presentation/navigation_bloc.dart';
 import 'package:services_marketplace_mobile/features/navigation/presentation/navigation_event.dart';
 import 'package:services_marketplace_mobile/features/navigation/presentation/navigation_state.dart';
+import 'package:services_marketplace_mobile/features/services/presentation/bloc/service_bloc.dart';
+import 'package:services_marketplace_mobile/features/services/presentation/bloc/service_event.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -59,8 +63,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.logout, color: Colors.redAccent),
-                onPressed: () =>
-                    context.read<AuthBloc>().add(AuthLogoutRequested()),
+                onPressed: () {
+                  context.read<BookingBloc>().add(StopBookingStream());
+                  context.read<ServiceBloc>().add(StopServiceStream());
+                  context.read<AuthBloc>().add(AuthLogoutRequested());
+                },
               ),
             ],
           ),
