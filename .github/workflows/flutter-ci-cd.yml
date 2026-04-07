@@ -22,6 +22,8 @@ jobs:
         run: flutter pub get
       - name: Setup Firebase Config
         run: cp lib/firebase_options_dummy.dart lib/firebase_options.dart
+      - name: Setup .env file
+        run: cp .env_dummy .env
       - name: Build Android App Bundle (AAB)
         run: flutter build appbundle --debug 
 
@@ -35,6 +37,28 @@ jobs:
           architecture: x64
       - name: Install dependencies
         run: flutter pub get
+      # 1. Renombramos el dummy para que no falte el archivo de Firebase
+      - name: Setup Firebase Config
+        run: cp lib/firebase_options_dummy.dart lib/firebase_options.dart
+      - name: Setup .env file
+        run: cp .env_dummy .env
+
+      # 2. Obligamos a que se cree el entorno de iOS y ajustamos la versión
+      - name: Initialize Podfile and Set iOS 15
+        run: |
+          cd ios
+          # Si el Podfile no existe, lo creamos con un comando de flutter
+          if [ ! -f Podfile ]; then
+            echo "Podfile not found, initializing..."
+            flutter build ios --debug --no-codesign --dry-run
+          fi
+          # Ahora que existe, forzamos la versión 15.0
+          sed -i '' "s/# platform :ios, '12.0'/platform :ios, '15.0'/g" Podfile
+          sed -i '' "s/platform :ios, '13.0'/platform :ios, '15.0'/g" Podfile
+          # Si por alguna razón no estaba la línea, la insertamos al inicio
+          if ! grep -q "platform :ios" Podfile; then
+            echo "platform :ios, '15.0'" | cat - Podfile > temp && mv temp Podfile
+          fi
       - name: Build iOS (No-codesign)
         run: flutter build ios --debug --no-codesign
 
