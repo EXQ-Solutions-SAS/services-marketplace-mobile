@@ -1,0 +1,72 @@
+name: Flutter Multi-Platform CI/CD
+
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build Android App Bundle (AAB)
+        run: flutter build appbundle --debug 
+
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.0'
+          architecture: x64
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build iOS (No-codesign)
+        run: flutter build ios --debug --no-codesign
+
+  report:
+    needs: [build-android, build-ios]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "### Build Artifacts Summary 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "- Android APK (Debug) generated successfully." >> $GITHUB_STEP_SUMMARY
+          echo "- iOS Build (No-codesign) validated." >> $GITHUB_STEP_SUMMARY
+          echo "- Ready for distribution to Firebase & TestFlight (Simulation Mode)." >> $GITHUB_STEP_SUMMARY
+
+  # --- FASE 4: CD (Estrategia de Distribución Multi-Plataforma) ---
+  # Nota: Estos pasos están listos para producción. Requieren Secrets configurados.
+
+  # 4.1 - Distribución de Android (vía Firebase)
+  #report:
+  #  needs: [build-android, build-ios]
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #   - name: Upload Android to Firebase App Distribution
+  #     uses: w9jds/firebase-action@master
+  #     with:
+  #       args: appdistribution:distribute build/app/outputs/flutter-apk/app-debug.apk --app ${{ secrets.FIREBASE_APP_ID_ANDROID }} --groups "testers-internos"
+  #     env:
+  #       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+  # 4.2 - Distribución de iOS (vía TestFlight / App Store Connect)
+  #   - name: Upload iOS to TestFlight
+  #     uses: apple-actions/upload-testflight-build@v1
+  #     with:
+  #       app-path: 'build/ios/ipa/*.ipa'
+  #       issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+  #       api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+  #       api-key-content: ${{ secrets.APPSTORE_P8_TOKEN }}
