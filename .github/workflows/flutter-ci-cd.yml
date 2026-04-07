@@ -20,6 +20,8 @@ jobs:
           flutter-version: '3.41.6'
       - name: Install dependencies
         run: flutter pub get
+      - name: Setup Firebase Config
+        run: cp lib/firebase_options_dummy.dart lib/firebase_options.dart
       - name: Build Android App Bundle (AAB)
         run: flutter build appbundle --debug 
 
